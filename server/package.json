@@ -1,0 +1,37 @@
+{
+  "name": "series-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "NODE_OPTIONS='--experimental-specifier-resolution=node' node index"
+  },
+  "author": "Vaily",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "chokidar": "^3.5.2",
+    "express": "^4.17.1",
+    "express-session": "^1.17.2",
+    "imdb-scrapper": "^2.3.1",
+    "nedb-promises": "^5.0.2",
+    "node-themoviedb": "^0.2.8",
+    "node-tvdb": "^4.1.0",
+    "nodejs-file-downloader": "^4.8.0",
+    "request": "^2.88.2",
+    "rss-parser": "^3.12.0",
+    "socket.io": "^4.4.0",
+    "tvdbapi": "^2.0.0",
+    "webtorrent": "^1.5.8",
+    "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.16.0",
+    "@babel/eslint-parser": "^7.16.3",
+    "eslint": "^8.4.1",
+    "eslint-plugin-import": "^2.25.3",
+    "webpack": "^5.65.0",
+    "webpack-bundle-analyzer": "^4.5.0",
+    "webpack-cli": "^4.9.1"
+  }
+}
