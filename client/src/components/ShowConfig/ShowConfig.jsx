@@ -3,45 +3,30 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import NewReleasesIcon from '@mui/icons-material/NewReleases';
 import {
-    Accordion, AccordionDetails, AccordionSummary, Box, Card, CardContent, CardHeader, CardMedia, Chip,
-    Grid, IconButton, TextField, Typography
+    Accordion, AccordionDetails, AccordionSummary, Box, Card, CardContent, CardHeader, CardMedia,
+    Grid, IconButton, Typography
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 
 import { UiContext } from '../../context/UiContext';
-import { setPageName } from '../MainMenu/mainMenuSlice';
-import { AddNewShowConfig } from './AddNewShowConfig';
-import { deleteShowConfig, loadShowConfigs, selectShowConfigs } from './showConfigSlice';
-import { ShowEpisode } from './ShowEpisode';
-
-const ShowAccordion = styled((props) => (
-    <Accordion disableGutters elevation={0} square {...props} />
-))(({ theme }) => ({
-    border: `1px solid ${theme.palette.divider}`,
-    '&:not(:last-child)': {
-        borderBottom: 0
-    },
-    '&:before': {
-        display: 'none'
-    }
-}));
+import { deleteShowConfig, loadShowConfigs, selectShowConfigs } from '../../store/reducers/showConfigSlice';
+import { NewBadge } from '../Common/NewBadge';
+import { AddNewShowConfig } from './components/AddNewShowConfig';
+import { EditShowConfig } from './components/EditShowConfig';
+import { ShowEpisode } from './components/ShowEpisode';
 
 export const ShowConfig = () => {
-    const scrollRef = React.useRef(null);
     const dispatch = useDispatch();
     const showConfigs = useSelector(selectShowConfigs);
     const { showDialog } = React.useContext(UiContext);
 
     useEffect(() => {
         !showConfigs.length && dispatch(loadShowConfigs());
-        dispatch(setPageName('Show Config'));
     }, []);
 
-    useEffect(() => {
-        scrollRef.current && scrollRef.current.scrollIntoView({behavior: 'smooth', block: 'start'});
-    }, [showConfigs]);
+    const onScrollToNewItem = (node) => {
+        node && node.scrollIntoView({behavior: 'smooth'});
+    };
 
     const onClickDelete = (show) => {
         showDialog({
@@ -55,6 +40,15 @@ export const ShowConfig = () => {
     if (!showConfigs.length) {
         return null;
     }
+
+    const CardAction = ({ show }) => (
+        <>
+            <NewBadge visible={show.newItem}/>
+            <IconButton aria-label="settings" onClick={() => onClickDelete(show)}>
+                <DeleteForeverIcon />
+            </IconButton>
+        </>
+    );
 
     return (
         <Box sx={{ m: 2 }}>
@@ -70,87 +64,26 @@ export const ShowConfig = () => {
             <Grid container spacing={2}>
                 {showConfigs.map((show, idx) =>
                     <Grid item xs={12} md={6} lg={4} xl={3} key={idx}>
-                        <Card>
-
-                            {/* <Card ref={show.newItem ? scrollRef : null}>*/}
-                            <CardHeader
-                                title={show.name}
-                                action={
-                                    <>
-                                        {show.newItem && <Chip color="success" label="New" variant="outlined" icon={<NewReleasesIcon />}/>}
-                                        <IconButton aria-label="settings" onClick={() => onClickDelete(show)}>
-                                            <DeleteForeverIcon />
-                                        </IconButton>
-                                    </>
-                                }
-                            />
+                        <Card ref={show.newItem ? onScrollToNewItem : null}>
+                            <CardHeader title={show.name} action={<CardAction show={show}/>} />
                             <CardMedia component="img" width="100%" image={show.meta.backdropImage} alt={show.name}/>
                             <CardContent>
-                                <ShowAccordion>
+                                <Accordion disableGutters square elevation={0}>
                                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                                         <Typography>Edit Show Config</Typography>
                                     </AccordionSummary>
                                     <AccordionDetails>
-                                        <TextField
-                                            margin="dense"
-                                            id="name"
-                                            label="Show Title"
-                                            type="text"
-                                            fullWidth
-                                            variant="outlined"
-                                            value={show.name}
-                                        />
-                                        <TextField
-                                            margin="dense"
-                                            id="releaseFilter"
-                                            label="Name Filter / Regex"
-                                            type="text"
-                                            fullWidth
-                                            variant="outlined"
-                                            value={show.releaseFilter}
-                                        />
-                                        <TextField
-                                            margin="dense"
-                                            id="releaseType"
-                                            label="Release Type"
-                                            type="text"
-                                            fullWidth
-                                            variant="outlined"
-                                            value={show.releaseType}
-                                        />
-                                        <TextField
-                                            margin="dense"
-                                            id="targetDirName"
-                                            label="NAS Target Directory"
-                                            type="text"
-                                            fullWidth
-                                            variant="outlined"
-                                            value={show.targetDirName}
-                                        />
-                                        <TextField
-                                            margin="dense"
-                                            id="season"
-                                            label="Season"
-                                            type="number"
-                                            fullWidth
-                                            variant="outlined"
-                                            value={show.season}
-                                        />
+                                        <EditShowConfig show={show} />
                                     </AccordionDetails>
-                                </ShowAccordion>
-                                <ShowAccordion>
+                                </Accordion>
+                                <Accordion disableGutters square elevation={0}>
                                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                                         <Typography>Latest aired episode (Spoiler alert!)</Typography>
                                     </AccordionSummary>
                                     <AccordionDetails>
                                         <ShowEpisode data={show.meta.lastAiredEpisode}/>
                                     </AccordionDetails>
-                                </ShowAccordion>
-                                {/* <Typography variant="body2" color="text.secondary">*/}
-                                {/*    <div>Last downloaded episode: 5x06</div>*/}
-                                {/*    <div>Downloaded: 2021-12-04</div>*/}
-                                {/*    <div>Last episode with subtitles: 5x03</div>*/}
-                                {/* </Typography>*/}
+                                </Accordion>
                             </CardContent>
                         </Card>
                     </Grid>

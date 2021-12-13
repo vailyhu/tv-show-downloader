@@ -13,9 +13,9 @@ import {
     TextField, Typography
 } from '@mui/material';
 
-import apiCall from '../../utils/apiCall';
-import { Image } from '../Common/Image';
-import { addShowConfig } from './showConfigSlice';
+import { addShowConfig } from '../../../store/reducers/showConfigSlice';
+import apiCall from '../../../utils/apiCall';
+import { Image } from '../../Common/Image';
 import { ShowEpisode } from './ShowEpisode';
 
 const autocompleteCache = {};

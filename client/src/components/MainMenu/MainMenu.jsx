@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Box, Tab, Tabs } from '@mui/material';
-
-import { selectPageName, setPageName } from './mainMenuSlice';
 
 const items =  [
     {label: 'Home', link: '/', icon: 'pi pi-fw pi-home'},
@@ -15,26 +12,21 @@ const items =  [
 
 export const MainMenu = () => {
     const [tabIndex, setTabIndex] = useState(0);
+    const location = useLocation();
     const navigate = useNavigate();
-    const dispatch = useDispatch();
-    const pageName = useSelector(selectPageName);
 
     useEffect(() => {
-        if (!pageName) {
-            return null;
-        }
-
-        const newTabIndex = items.findIndex(e => e.label === pageName);
+        const newTabIndex = items.findIndex(e => e.link === location.pathname);
         setTabIndex(newTabIndex === -1 ? 0 : newTabIndex);
         navigate(items[newTabIndex].link);
-    }, [pageName]);
+    }, [location.pathname]);
 
     const onTabChange = (e, newValue) => {
-        dispatch(setPageName(items[newValue].label));
+        navigate(items[newValue].link);
     };
 
     return (
-        pageName && <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs value={tabIndex} onChange={onTabChange}>
                 <Tab label="Home" />
                 <Tab label="Show Config" />

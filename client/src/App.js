@@ -9,7 +9,7 @@ import { MainMenu } from './components/MainMenu/MainMenu';
 import { Settings } from './components/Settings/Settings';
 import { ShowConfig } from './components/ShowConfig/ShowConfig';
 import { UiProvider } from './context/UiContext';
-import { store } from './store';
+import { store } from './store/store';
 import theme from './theme';
 
 function App() {

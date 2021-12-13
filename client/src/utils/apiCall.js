@@ -17,12 +17,6 @@ const axiosCall = (method) =>
             return response.data;
         } catch (e) {
             console.log('call-err', method, path, data);
-            // const status = e?.request?.status;
-            // let error = 'Network error!';
-            // if (status >= 500) {
-            //     error = 'Server error!';
-            // }
-            // emitCustomEvent('lediumApiError', error);
             throw (e);
         }
     };

@@ -1,26 +1,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { useSelector } from 'react-redux';
 
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-// import { makeStyles } from '@mui/styles';
 import {UiContext} from '../../../context/UiContext';
-
-// const useStyles = makeStyles((theme) => ({
-//     backdrop: {
-//         zIndex: theme.zIndex.drawer + 1,
-//         color: '#fff'
-//     }
-// }));
+import { selectLoading } from '../../../store/reducers/loadingSlice';
 
 export const Loading = () => {
+    const storeLoading = useSelector(selectLoading);
     const { loading } = React.useContext(UiContext);
-    // const classes = useStyles();
 
     return ReactDOM.createPortal(
-        // className={classes.backdrop}
-        <Backdrop open={loading} >
+        <Backdrop open={loading || storeLoading} >
             <CircularProgress color="inherit" />
         </Backdrop>,
         document.querySelector("#loading")

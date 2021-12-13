@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
 
 import AddIcon from '@mui/icons-material/Add';
 import BackupIcon from '@mui/icons-material/Backup';
@@ -17,17 +16,17 @@ import {
 import { useFormik } from 'formik';
 
 import { UiContext } from '../../context/UiContext';
+import { useApiCall } from '../../hooks/useApiCall';
 import apiCall from '../../utils/apiCall';
-import { setPageName } from '../MainMenu/mainMenuSlice';
 import { settingsValidationSchema } from './settingsValidationSchema';
 
 const defaultInputProps = {margin: 'dense', fullWidth: true, variant: 'outlined'};
 
 export const Settings = () => {
     const { showDialog, showSnackbar } = React.useContext(UiContext);
-    const dispatch = useDispatch();
     const [settings, setSettings] = React.useState(null);
     const [scrollToSection, setScrollToSection] = React.useState(null);
+    const appConfigRequest = useApiCall('/appConfig');
 
     const formik = useFormik({
         validationSchema: settingsValidationSchema,
@@ -44,14 +43,10 @@ export const Settings = () => {
         }
     });
 
-    useEffect(async () => {
-        dispatch(setPageName('Settings'));
-        setSettings(await apiCall.get('/appConfig'));
-    }, []);
-
     useEffect(() => {
-        formik.setValues(settings);
-    }, [settings]);
+        setSettings(appConfigRequest.response);
+        formik.setValues(appConfigRequest.response);
+    }, [appConfigRequest.response]);
 
     const onRef = (node) => {
         if (node?.id === scrollToSection) {

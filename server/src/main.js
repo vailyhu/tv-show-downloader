@@ -5,8 +5,8 @@ import { nasService } from './services/nas.service';
 
 export const main = async () => {
     await Promise.all([
-        torrentService(),
-        rssService(),
+        // torrentService(),
+        // rssService(),
         nasService()
     ]);
     expressApp();
