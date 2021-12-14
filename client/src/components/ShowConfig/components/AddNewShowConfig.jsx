@@ -13,8 +13,8 @@ import {
     TextField, Typography
 } from '@mui/material';
 
+import { useApiCall } from '../../../hooks/useApiCall';
 import { addShowConfig } from '../../../store/reducers/showConfigSlice';
-import apiCall from '../../../utils/apiCall';
 import { Image } from '../../Common/Image';
 import { ShowEpisode } from './ShowEpisode';
 
@@ -62,6 +62,7 @@ export const AddNewShowConfig = () => {
     const [options, setOptions] = React.useState([]);
     const [loading, setLoading] = React.useState(false);
     const [selectedItem, setSelectedItem] = React.useState(null);
+    const { apiResponse, setApiRequest } = useApiCall();
 
     React.useEffect(async () => {
         setOptions([]);
@@ -69,14 +70,17 @@ export const AddNewShowConfig = () => {
             if (autocompleteCache[inputValue]) {
                 setOptions(autocompleteCache[inputValue]);
             } else {
-                setLoading(true);
-                const response = await apiCall.get('/showConfig/query/' + inputValue);
-                setOptions(response);
-                setLoading(false);
-                autocompleteCache[inputValue] = response;
+                setApiRequest({id: 'QUERY', setLoading, url: `/showConfig/query/${inputValue}`});
             }
         }
     }, [inputValue]);
+
+    React.useEffect(() => {
+        if (apiResponse.id === 'QUERY') {
+            setOptions(apiResponse.data);
+            autocompleteCache[inputValue] = apiResponse.data;
+        }
+    }, [apiResponse]);
 
     const openDialog = () => {
         setDialogOpen(true);

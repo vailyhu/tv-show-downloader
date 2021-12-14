@@ -1,33 +1,54 @@
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
+import axios from 'axios';
+
 import { setLoading } from '../store/reducers/loadingSlice';
-import apiCall from '../utils/apiCall';
 
-export const useApiCall = (url, params = {}) => {
+axios.defaults.baseURL = '/api';
+const optionParams = ['id', 'setLoading'];
+export const useApiCall = () => {
     const dispatch = useDispatch();
-    const [response, setResponse] = useState(undefined);
-    const [error, setError] = useState('');
+    const [apiResponse, setApiResponse] = useState({
+        id: null,
+        data: {}
+    });
+    const [apiError, setApiError] = useState(null);
+    const [apiRequest, setApiRequest] = useState({});
 
-    const fetchData = async () => {
+    const fetchData = async (params) => {
+        const options = {};
         params.method = params.method || 'get';
-        params.url = '/api' + params.url;
+
+        optionParams.forEach(option => {
+            if (params[option]) {
+                options[option] = params[option];
+                delete params[option];
+            }
+        });
+
+        if (!params.url) {
+            return null;
+        }
 
         try {
-            dispatch(setLoading(true));
-            const result = await apiCall[params.method](url, params);
-            setResponse(result);
+            options.setLoading
+                ? options.setLoading(true)
+                : dispatch(setLoading(true));
+            const result = await axios.request(params);
+            setApiResponse({id: options.id, data: result.data});
         } catch (e) {
-            setError(e);
+            setApiError({id: options.id, error: e});
         } finally {
-            dispatch(setLoading(false));
-            setLoading(false);
+            options.setLoading
+                ? options.setLoading(false)
+                : dispatch(setLoading(false));
         }
     };
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        fetchData(apiRequest);
+    }, [apiRequest.id]);
 
-    return { response, error };
+    return { apiResponse, apiError, setApiRequest };
 };

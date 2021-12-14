@@ -1,7 +1,8 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-    isLoading: false
+    isLoading: false,
+    requests: []
 };
 
 function isPendingAction(action) {
@@ -17,7 +18,7 @@ function isRejectedAction(action) {
 }
 
 const loadingSlice = createSlice({
-    name: 'mainMenu',
+    name: 'loading',
     initialState,
     reducers: {
         setLoading: (state, action) => {

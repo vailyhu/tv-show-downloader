@@ -1,23 +1,30 @@
 import React from 'react';
+import { useDispatch } from 'react-redux';
 
-import { TextField } from '@mui/material';
+import BackupIcon from '@mui/icons-material/Backup';
+import { Box, Button, TextField } from '@mui/material';
 import { useFormik } from 'formik';
 
+import { updateShowConfig } from '../../../store/reducers/showConfigSlice';
 import { editShowConfigValidationSchema } from './editShowConfigValidationSchema';
 
 const defaultInputProps = {margin: 'dense', fullWidth: true, variant: 'outlined', type: 'text'};
 
 export const EditShowConfig = ({ show }) => {
+    const dispatch = useDispatch();
+
     const formik = useFormik({
-        initialValues: show,
+        initialValues: {...show, meta: null},
         validationSchema: editShowConfigValidationSchema,
-        onSubmit: async (values) => {
-            console.log(values);
-        }
+        onSubmit: async (values) => dispatch(updateShowConfig(values))
     });
 
+    React.useEffect(() => {
+        formik.setValues({...show, meta: null});
+    }, [show]);
+
     return (
-        <>
+        <form onSubmit={formik.handleSubmit}>
             <TextField
                 {...defaultInputProps}
                 label="Show Title"
@@ -54,6 +61,10 @@ export const EditShowConfig = ({ show }) => {
                 helperText={formik.errors.season}
                 {...formik.getFieldProps('season')}
             />
-        </>
+
+            <Box sx={{ mt: 2, width: '100%', textAlign: 'center' }}>
+                <Button type="submit" variant="contained" disabled={!formik.isValid || !formik.dirty} startIcon={<BackupIcon />}>Save</Button>
+            </Box>
+        </form>
     );
 };

@@ -18,10 +18,13 @@ import { ShowEpisode } from './components/ShowEpisode';
 export const ShowConfig = () => {
     const dispatch = useDispatch();
     const showConfigs = useSelector(selectShowConfigs);
+    const [expanded, setExpanded] = React.useState({});
+    // do not render hidden content
+    const [accordionContentVisible, setAccordionContentVisible] = React.useState({});
     const { showDialog } = React.useContext(UiContext);
 
     useEffect(() => {
-        !showConfigs.length && dispatch(loadShowConfigs());
+        dispatch(loadShowConfigs());
     }, []);
 
     const onScrollToNewItem = (node) => {
@@ -36,6 +39,31 @@ export const ShowConfig = () => {
             okCallback: () => dispatch(deleteShowConfig(show))
         });
     };
+
+    React.useEffect(() => {
+        showConfigs.filter(show => show.newItem).forEach(show => {
+            const id = `${show._id}:config`;
+            setExpanded({...expanded, [id]: true});
+        });
+    }, [showConfigs]);
+
+    const onClickAccordion = ((show, label) => {
+        const id = `${show._id}:${label}`;
+        if (expanded[id]) {
+            // keep the content visible while the accordion closes
+            setTimeout(() => {
+                setAccordionContentVisible({...expanded, [id]: false});
+            }, 500);
+        } else {
+            setAccordionContentVisible({...expanded, [id]: true});
+        }
+        setExpanded({...expanded, [id]: !expanded[id]});
+    });
+
+    const isAccordionExpanded = ((show, label) => {
+        const id = `${show._id}:${label}`;
+        return expanded[id] || false;
+    });
 
     if (!showConfigs.length) {
         return null;
@@ -68,20 +96,20 @@ export const ShowConfig = () => {
                             <CardHeader title={show.name} action={<CardAction show={show}/>} />
                             <CardMedia component="img" width="100%" image={show.meta.backdropImage} alt={show.name}/>
                             <CardContent>
-                                <Accordion disableGutters square elevation={0}>
+                                <Accordion onChange={() => onClickAccordion(show, 'config')} expanded={isAccordionExpanded(show, 'config')} disableGutters elevation={0}>
                                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                                         <Typography>Edit Show Config</Typography>
                                     </AccordionSummary>
                                     <AccordionDetails>
-                                        <EditShowConfig show={show} />
+                                        {accordionContentVisible[`${show._id}:config`] && <EditShowConfig show={show} />}
                                     </AccordionDetails>
                                 </Accordion>
-                                <Accordion disableGutters square elevation={0}>
+                                <Accordion onChange={() => onClickAccordion(show, 'latest')} expanded={isAccordionExpanded(show, 'latest')} disableGutters elevation={0}>
                                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                                         <Typography>Latest aired episode (Spoiler alert!)</Typography>
                                     </AccordionSummary>
                                     <AccordionDetails>
-                                        <ShowEpisode data={show.meta.lastAiredEpisode}/>
+                                        {accordionContentVisible[`${show._id}:latest`] && <ShowEpisode data={show.meta.lastAiredEpisode} />}
                                     </AccordionDetails>
                                 </Accordion>
                             </CardContent>

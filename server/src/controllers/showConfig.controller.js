@@ -15,8 +15,15 @@ export const createShowConfig = catchAsync(async(req, res) => {
 });
 
 export const updateShowConfig = catchAsync(async(req, res) => {
-    const success = await showConfigService.updateShowConfig({_id: req.params.id}, req.body, {override: true});
-    res.json(success ? {id: req.params.id} : null);
+    const data = {
+        name: req.body.name,
+        releaseFilter: req.body.releaseFilter,
+        releaseType: req.body.releaseType,
+        season: req.body.season,
+        targetDirName: req.body.targetDirName
+    };
+    const success = await showConfigService.updateShowConfig({_id: req.params.id}, data);
+    res.json(success ? {...data, _id: req.params.id} : {error: true});
 });
 
 export const deleteShowConfig = catchAsync(async(req, res) => {

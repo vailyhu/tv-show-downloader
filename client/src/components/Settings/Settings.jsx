@@ -17,7 +17,6 @@ import { useFormik } from 'formik';
 
 import { UiContext } from '../../context/UiContext';
 import { useApiCall } from '../../hooks/useApiCall';
-import apiCall from '../../utils/apiCall';
 import { settingsValidationSchema } from './settingsValidationSchema';
 
 const defaultInputProps = {margin: 'dense', fullWidth: true, variant: 'outlined'};
@@ -26,27 +25,36 @@ export const Settings = () => {
     const { showDialog, showSnackbar } = React.useContext(UiContext);
     const [settings, setSettings] = React.useState(null);
     const [scrollToSection, setScrollToSection] = React.useState(null);
-    const appConfigRequest = useApiCall('/appConfig');
+    const { apiResponse, setApiRequest } = useApiCall();
 
     const formik = useFormik({
         validationSchema: settingsValidationSchema,
-        onSubmit: async (values) => {
-            const response = await(apiCall.put('/appConfig', values));
-            if (response.errors) {
-                setScrollToSection(Object.keys(response.errors)[0]);
-                formik.setErrors(response.errors);
-                showSnackbar({message: 'Error happened during the save', severity: 'error'});
-            } else {
-                setSettings(response);
-                showSnackbar({message: 'Settings are saved', severity: 'success'});
-            }
-        }
+        onSubmit: async (values) => setApiRequest({id: 'PUT_CONFIG', method: 'put', url: '/appConfig', data: values})
     });
 
     useEffect(() => {
-        setSettings(appConfigRequest.response);
-        formik.setValues(appConfigRequest.response);
-    }, [appConfigRequest.response]);
+        setApiRequest({id: 'GET_CONFIG', url: '/appConfig'});
+    }, []);
+
+    useEffect(() => {
+        if (apiResponse.id === 'GET_CONFIG') {
+            setSettings(apiResponse.data);
+        }
+
+        if (apiResponse.id === 'PUT_CONFIG') {
+            if (apiResponse.data.errors) {
+                setScrollToSection(Object.keys(apiResponse.data.errors)[0]);
+                formik.setErrors(apiResponse.data.errors);
+                showSnackbar({message: 'Error happened during the save', severity: 'error'});
+            } else {
+                showSnackbar({message: 'Settings are saved', severity: 'success'});
+            }
+        }
+    }, [apiResponse]);
+
+    useEffect(() => {
+        formik.setValues(settings);
+    }, [settings]);
 
     const onRef = (node) => {
         if (node?.id === scrollToSection) {
