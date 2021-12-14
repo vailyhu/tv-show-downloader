@@ -103,9 +103,9 @@ export const addTorrent = async (fileName) => {
         client.add(fileName, {path: torrentConfig.torrentDir}, (torrent) => {
             torrentFileMap.push({fileName, torrent});
             torrent.on('ready', () => logger.debug(`${LOG_LABEL} ${torrent.name} is added.`));
-            torrent.on('warning', (warning) => logger.warn(`${LOG_LABEL} ${torrent.name}: ${warning}`));
-            torrent.on('error', (error) => logger.warning(`${LOG_LABEL} ${torrent.name}: ${error}`));
-            torrent.on('noPeers', () => !torrent.done && logger.warn(`${LOG_LABEL} ${torrent.name}: No peer available.`));
+            torrent.on('warning', (warning) => logger.debug(`${LOG_LABEL} ${torrent.name}: ${warning}`));
+            torrent.on('error', (error) => logger.warn(`${LOG_LABEL} ${torrent.name}: ${error}`));
+            torrent.on('noPeers', () => !torrent.done && logger.debug(`${LOG_LABEL} ${torrent.name}: No peer available.`));
             torrent.on('done', async () => {
                 const episodeData = parseReleaseName(torrent.name);
                 const torrentStatus = await getTorrentStatus(torrent);
@@ -120,7 +120,13 @@ export const addTorrent = async (fileName) => {
                     }
                 });
                 logger.info(`${LOG_LABEL} {green}{bold}${torrent.name}{/bold}{/green} is downloaded, seeding.`);
-                await copyDownloadedTorrentToNas(torrent);
+                await copyDownloadedTorrentToNas({
+                    name: torrent.name,
+                    files: torrent.files.map(f => ({
+                        name: f.name,
+                        path: f.path
+                    }))
+                });
             });
             updateTorrentInDb(torrent, true);
             setInterval(() => updateTorrentInDb(torrent), TORRENT_DB_UPDATE_INTERVAL * 1000);
@@ -138,7 +144,7 @@ export const addTorrent = async (fileName) => {
 
 const destroyClient = () => {
     if (client.torrents.length > 0) {
-        logger.info('${LOG_LABEL} Stopping torrents.');
+        logger.info(`${LOG_LABEL} Stopping torrents.`);
     }
     try {
         client.destroy();
@@ -152,9 +158,7 @@ export const torrentService = async () => {
     if (fs.existsSync(torrentConfig.watchDir)) {
         const watcher = chokidar.watch(torrentConfig.watchDir, {ignored: /^\./, persistent: true});
 
-        watcher
-            .on('add', (file) => addTorrent(file))
-            .on('unlink', (file) => removeTorrent(file));
+        watcher.on('add', addTorrent).on('unlink', removeTorrent);
     } else {
         logger.error(`${LOG_LABEL} Watch dir ${torrentConfig.watchDir} is not exists!`);
     }

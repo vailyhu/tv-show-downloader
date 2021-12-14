@@ -4,7 +4,7 @@ import Downloader from 'nodejs-file-downloader';
 import { getAppConfig } from './appConfig.service';
 import { logger } from '../utils/logger';
 import { isTitleInFilterConfigs } from './showConfig.service';
-import { getNasShowData } from './nas.service';
+import { getNasTVShowData } from './nas.service';
 import { isTheSameEpisode, parseReleaseName } from '../utils/parseReleaseName';
 import { getTorrents } from './torrent.service';
 import { addLog } from './log.service';
@@ -66,7 +66,7 @@ const getFilteredFeedItems = async () => {
 export const downloadTorrents = async () => {
     const torrentConfig = await getAppConfig('torrent');
     const itemsToDownload = await getFilteredFeedItems();
-    const nasShowData = await getNasShowData();
+    const nasShowData = await getNasTVShowData();
     const torrentData = getTorrents().map(torrentName => ({
         torrentName,
         ...parseReleaseName(torrentName)
