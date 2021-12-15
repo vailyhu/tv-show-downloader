@@ -2,7 +2,7 @@ import Parser from 'rss-parser';
 import * as fs from 'fs';
 import Downloader from 'nodejs-file-downloader';
 import { getAppConfig } from './appConfig.service';
-import { logger } from '../utils/logger';
+import { logger } from '../services/log.service';
 import { isTitleInFilterConfigs } from './showConfig.service';
 import { getNasTVShowData } from './nas.service';
 import { isTheSameEpisode, parseReleaseName } from '../utils/parseReleaseName';

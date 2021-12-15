@@ -3,15 +3,18 @@ import chokidar from 'chokidar';
 import { getAppConfig } from './appConfig.service';
 import { parseReleaseName } from '../utils/parseReleaseName';
 import { isTitleInFilterConfigs } from './showConfig.service';
-import { logger } from '../utils/logger';
+import { logger } from '../services/log.service';
 import { addLog } from './log.service';
 
+const LOG_LABEL = `{green}[NAS]{/green}`;
 const videoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'mpg', 'mpeg'];
-let nasAvailable = false;
 const nasCopyQueue = [];
+
 let copyInProgress = false;
 let queueInProgress = false;
-const LOG_LABEL = `{red}[NAS]{/red}`;
+let nasAvailable = null;
+let watcher = null;
+let watcherPrevPath = null;
 
 const getNasDirs = async () => {
     if (!nasAvailable) {
@@ -122,60 +125,10 @@ export const copyDownloadedTorrentToNas = async (torrent) => {
         }
         queueInProgress = false;
     }
-
-
-
-};
-
-// checks mounted nas file changes
-const nasWatcher = async (nasConfig) => {
-    if (fs.existsSync(nasConfig.targetDir)) {
-        await new Promise(resolve => {
-            const watcher = chokidar.watch(nasConfig.targetDir, {
-                ignored: /^\./,
-                persistent: true,
-                usePolling: true,
-                interval: 100
-            });
-
-            const fileUnlinked = (file) => {
-                // is this unlinked or nas unmounted?
-                if (!fs.existsSync(nasConfig.targetDir)) {
-                    // unmounted, go back to nasService while loop
-                    watcher.unwatch(nasConfig.targetDir);
-                    resolve();
-                }
-                // todo: sync data
-            };
-
-            const fileAdded = (file) => {
-                // todo: sync data
-            };
-
-            watcher
-                .on('add', fileAdded)
-                .on('unlink', fileUnlinked);
-        });
-    }
-};
-
-// waits for nas mount
-const nasMountWatcher = async (nasConfig) => {
-    const watcher = chokidar.watch(nasConfig.targetDir, {ignored: /^\./, persistent: true, usePolling: true, interval: 100});
-
-    await new Promise((resolve) => {
-        const mounted = () => {
-            if (fs.existsSync(nasConfig.targetDir)) {
-                watcher.unwatch(nasConfig.targetDir);
-                resolve();
-            }
-        };
-        watcher.on('all', mounted).on('raw', mounted);
-    });
 };
 
 const checkNas = async (nasConfig, serviceStart) => {
-    if (fs.existsSync(nasConfig.targetDir)) {
+    if ((nasAvailable === false || serviceStart) && fs.existsSync(nasConfig.targetDir)) {
         nasAvailable = true;
 
         logger.info(`${LOG_LABEL} NAS is available.`);
@@ -183,34 +136,61 @@ const checkNas = async (nasConfig, serviceStart) => {
         // it is mounted since app start
         const itemsInQueue = nasCopyQueue.length;
         if (serviceStart === false && itemsInQueue > 0) {
-            logger.info(`${LOG_LABEL} ${itemsInQueue} item(s) waiting in copy queue.`);
+            logger.info(`${LOG_LABEL} ${itemsInQueue} item${itemsInQueue === 1 ? ' is' : 's are'} waiting in copy queue.`);
 
             // others will be handled by copyDownloadedTorrentToNas
             const torrent = nasCopyQueue.shift();
             await copyDownloadedTorrentToNas(torrent);
         }
-    } else {
+    }
+
+    if ((nasAvailable === true || serviceStart) && !fs.existsSync(nasConfig.targetDir)) {
         nasAvailable = false;
 
         logger.error(`${LOG_LABEL} {red}{bold}NAS target dir in unavailable. Is NAS mounted?{/bold}{/red}`);
         logger.error(`${LOG_LABEL} NAS related features are disabled.`);
-        logger.info(`${LOG_LABEL} turning on NAS watcher.`);
-
-        await nasMountWatcher(nasConfig);
-        await checkNas(nasConfig, false);
     }
+};
+
+const nasFsWatcher = (path) => {
+    if (watcher && watcherPrevPath) {
+        watcher.unwatch(watcherPrevPath);
+    }
+    watcherPrevPath = path;
+
+    const fileUnlinked = (file) => {
+        // is a file deleted or the nas unmounted?
+        if (fs.existsSync(path)) {
+            console.log('event - file unlinked - ' + file);
+            // TODO: sync data
+        }
+    };
+
+    const fileAdded = (file) => {
+        console.log('event - file added - ' + file);
+        // TODO: sync data
+    };
+
+    watcher = chokidar.watch(path, {
+        ignored: /^\./,
+        persistent: true,
+        usePolling: true,
+        interval: 1000,
+        ignoreInitial: true
+    });
+
+    watcher.on('add', fileAdded).on('unlink', fileUnlinked);
 };
 
 export const nasService = async () => {
     const nasConfig = await getAppConfig('nas');
 
     await checkNas(nasConfig, true);
-    // eslint-disable-next-line
-    // while (true) {
-    await nasWatcher(nasConfig);
-    await checkNas(nasConfig, false);
-    // todo: repeat somehow
-    // }
+    nasFsWatcher(nasConfig.targetDir);
+
+    setInterval(() => {
+        checkNas(nasConfig, false);
+    }, 2000);
 };
 
 

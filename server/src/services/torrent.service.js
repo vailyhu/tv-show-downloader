@@ -3,7 +3,7 @@ import * as path from 'path';
 import chokidar from 'chokidar';
 import fs from 'fs';
 import { getAppConfig } from './appConfig.service';
-import { logger } from '../utils/logger';
+import { logger } from '../services/log.service';
 import { formatBytes } from '../utils/formatBytes';
 import { toHHMMSS } from '../utils/toHHMMSS';
 import { copyDownloadedTorrentToNas } from './nas.service';
@@ -13,7 +13,7 @@ import { parseReleaseName } from '../utils/parseReleaseName';
 
 // TODO: check ratio and seed time
 
-const LOG_LABEL = `{magenta}[TORRENT]{/magenta}`;
+const LOG_LABEL = `{blue}{bold}[TORRENT]{/bold}{/blue}`;
 const TORRENT_DB_UPDATE_INTERVAL = 5;
 const torrentFileMap = [];
 const client = new WebTorrent();
@@ -107,6 +107,7 @@ export const addTorrent = async (fileName) => {
             torrent.on('error', (error) => logger.warn(`${LOG_LABEL} ${torrent.name}: ${error}`));
             torrent.on('noPeers', () => !torrent.done && logger.debug(`${LOG_LABEL} ${torrent.name}: No peer available.`));
             torrent.on('done', async () => {
+                logger.info(`${LOG_LABEL} {green}{bold}${torrent.name}{/bold}{/green} is downloaded, seeding.`);
                 const episodeData = parseReleaseName(torrent.name);
                 const torrentStatus = await getTorrentStatus(torrent);
                 await addLog({
@@ -119,7 +120,6 @@ export const addTorrent = async (fileName) => {
                         downloadedSize: torrentStatus.downloaded
                     }
                 });
-                logger.info(`${LOG_LABEL} {green}{bold}${torrent.name}{/bold}{/green} is downloaded, seeding.`);
                 await copyDownloadedTorrentToNas({
                     name: torrent.name,
                     files: torrent.files.map(f => ({
